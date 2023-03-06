@@ -55,3 +55,8 @@ int Grid::getGridCoordinate(double coordinate) const
 {
     return (int)std::floor(coordinate / constants::distanceThreshold);
 }
+
+std::forward_list<Particle *> &Grid::operator[](int index)
+{
+    return grid[index];
+}

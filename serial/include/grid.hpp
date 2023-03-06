@@ -3,6 +3,7 @@
 
 #include "particle.hpp"
 #include <forward_list>
+#include <mutex>
 #include <vector>
 
 class Grid
@@ -18,11 +19,14 @@ public:
     inline int getGridX(const Particle &particle) { return getGridCoordinate(particle.x); }
     inline int getGridY(const Particle &particle) { return getGridCoordinate(particle.y); }
 
+    std::forward_list<Particle *> &operator[](int index);
+
 public:
     std::vector<std::forward_list<Particle *>> grid;
 
 private:
     int grid_dim_;
+    std::vector<std::mutex> locks;
 };
 
 #endif // GRID_HPP

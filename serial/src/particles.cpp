@@ -108,3 +108,5 @@ void Particles::Save(fmt::ostream &dump_file)
         dump_file.print("{} {}\n", particle.x, particle.y);
     }
 }
+
+
