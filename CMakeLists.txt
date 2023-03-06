@@ -18,9 +18,11 @@ include_directories(include)
 
 
 find_package(fmt REQUIRED)
+find_package(cxxopts REQUIRED)
 
 add_executable(serial serial.cpp ${SRCS})
-target_link_libraries(serial fmt::fmt)
+# TODO: build an interface library
+target_link_libraries(serial fmt::fmt cxxopts::cxxopts)
 
 
 # SECTION FOR OLD EXECUTABLES
