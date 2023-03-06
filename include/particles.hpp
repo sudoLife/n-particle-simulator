@@ -23,7 +23,7 @@ public:
 
 public:
     std::vector<Particle> particles;
-    int size;
+    double size;
 
 private:
 private:

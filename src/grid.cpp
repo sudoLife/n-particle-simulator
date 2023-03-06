@@ -24,6 +24,7 @@ void Grid::Remove(Particle &particle, int cell_index)
         if (*it == &particle)
         {
             grid[cell_index].erase_after(prev);
+            return;
         }
     }
 }
