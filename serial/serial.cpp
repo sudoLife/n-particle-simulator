@@ -55,7 +55,7 @@ int main(int argc, char **argv)
                 for (int gy = std::max(grid_y - 1, 0); gy <= std::min(grid_y + 1, grid_size - 1); gy++)
                 {
                     int cell_index = gx * grid_size + gy;
-                    for (auto it = grid.grid[cell_index].begin(); it != grid.grid[cell_index].end(); it++)
+                    for (auto it = grid[cell_index].begin(); it != grid[cell_index].end(); it++)
                     {
                         particles.ApplyForce(particle, **it);
                     }

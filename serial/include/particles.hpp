@@ -20,6 +20,7 @@ public:
 
     std::vector<Particle>::iterator begin() { return particles.begin(); }
     std::vector<Particle>::iterator end() { return particles.end(); }
+    Particle &operator[](int i) { return particles[i]; }
 
 public:
     std::vector<Particle> particles;
