@@ -3,7 +3,6 @@
 
 #include "particle.hpp"
 #include <forward_list>
-#include <mutex>
 #include <vector>
 
 class Grid
@@ -26,7 +25,6 @@ public:
 
 private:
     int grid_dim_;
-    std::vector<std::mutex> locks;
 };
 
 #endif // GRID_HPP
