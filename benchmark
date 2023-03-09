@@ -1,0 +1,23 @@
+#!/usr/bin/env zsh
+
+if [ $# -ne 2 ]; then
+    echo "Error: supply the executable and the output filename"
+    exit 1
+fi
+
+
+echo "Starting benchmark..."
+executable=$1
+filename=$2
+
+echo "n benchmark" > $filename
+
+for i in {5..20}
+do
+    let n=$((2**$i))
+    for j in {1..5} # I want it to be precise and nice
+    do
+        bm=$($executable -n $n -s 1000 | grep -i "time" | awk -F ' ' '{print $2}')
+        printf "%d %d\n" $n $bm | tee -a $filename
+    done
+done

@@ -1,0 +1,24 @@
+#!/usr/bin/env zsh
+
+if [ $# -ne 2 ]; then
+    echo "Error: supply the executable and the output filename"
+    exit 1
+fi
+
+echo "Starting speedup benchmark..."
+
+
+n=65536
+executable=$1
+filename=$2
+
+echo "n threads benchmark" > $filename
+
+for t in {1..16}
+do
+    for j in {1..5}
+    do
+        bm=$($executable -n $n -t $t -s 100 | grep -i "time" | awk -F ' ' '{print $2}')
+        printf "%d %d %d\n" $n $t $bm | tee -a $filename
+    done
+done
