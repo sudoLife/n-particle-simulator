@@ -15,7 +15,7 @@ typedef std::chrono::nanoseconds ns;
 int particleNum = defaults::particleNum;
 int stepNum = defaults::stepNum;
 int saveFreq = defaults::saveFreq;
-std::string dump_file_name = "test.dump";
+std::string dumpFilename = "test.dump";
 
 // sets the above parameters
 void parse_cmd(int argc, char **argv);
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     for (auto &particle : particles)
         grid.Add(particle);
 
-    fmt::ostream dump_file = fmt::output_file(dump_file_name);
+    fmt::ostream dump_file = fmt::output_file(dumpFilename);
 
     auto t1 = hclock::now();
 
@@ -108,7 +108,7 @@ void parse_cmd(int argc, char **argv)
     if (result.count("steps"))
         stepNum = result["steps"].as<int>();
     if (result.count("filename"))
-        dump_file_name = result["filename"].as<std::string>();
+        dumpFilename = result["filename"].as<std::string>();
     if (result.count("frequency"))
         saveFreq = result["frequency"].as<int>();
 
@@ -116,5 +116,5 @@ void parse_cmd(int argc, char **argv)
                particleNum,
                stepNum,
                saveFreq,
-               dump_file_name);
+               dumpFilename);
 }
