@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 {
     // TODO: replace this with an option?
     parse_cmd(argc, argv);
-    bool save = true;
+    bool save = false;
 
     Particles particles(particleNum);
 
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 
     auto t2 = hclock::now();
 
-    auto dur = duration_cast<ms>(t2 - t1).count();
+    auto dur = duration_cast<us>(t2 - t1).count();
 
     fmt::print("Time: {}\n", dur);
 

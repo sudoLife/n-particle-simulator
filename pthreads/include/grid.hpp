@@ -23,10 +23,10 @@ public:
 
 public:
     std::vector<std::forward_list<Particle *>> grid;
+    std::vector<std::mutex> locks;
 
 private:
     int grid_dim_;
-    std::vector<std::mutex> locks_;
 };
 
 #endif // GRID_HPP

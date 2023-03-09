@@ -6,6 +6,7 @@
 #include <chrono>
 #include <cxxopts.hpp>
 #include <fmt/os.h>
+#include <mutex>
 #include <thread>
 
 typedef std::chrono::high_resolution_clock hclock;
@@ -18,7 +19,7 @@ int particleNum = defaults::particleNum;
 int stepNum = defaults::stepNum;
 int saveFreq = defaults::saveFreq;
 int threadNum = defaults::threadNum;
-bool save = true;
+bool save = false;
 
 std::string dump_file_name = "test.dump";
 
@@ -48,7 +49,7 @@ int main(int argc, char **argv)
     std::barrier barrier(threadNum);
     std::vector<std::thread> threads;
     threads.reserve(threadNum);
-    int chunkSize = particles.size / threadNum;
+    int chunkSize = particleNum / threadNum;
 
     auto simulatorThread = [&](int start, int stop, bool main = false)
     {
@@ -62,12 +63,14 @@ int main(int argc, char **argv)
 
                 // The min and max functions are added to ensure we don't run out of
                 // bounds while checking neighbors
-                // would it be acceptable to parallelize this place?
                 for (int gx = std::max(grid_x - 1, 0); gx <= std::min(grid_x + 1, grid_size - 1); gx++)
                 {
                     for (int gy = std::max(grid_y - 1, 0); gy <= std::min(grid_y + 1, grid_size - 1); gy++)
                     {
                         int cell_index = gx * grid_size + gy;
+
+                        // the lock is necessary to have valid iterators
+                        std::lock_guard<std::mutex> lock(grid.locks[cell_index]);
                         for (auto it = grid[cell_index].begin(); it != grid[cell_index].end(); it++)
                         {
                             particles.ApplyForce(particles[i], **it);
@@ -75,6 +78,9 @@ int main(int argc, char **argv)
                     }
                 }
             }
+
+            // we don't want to move a particle that could be used on the previous calculation and also in the dump step below
+            barrier.arrive_and_wait();
 
             // this is an obvious optimization step
             for (int i = start; i < stop; i++)
@@ -85,15 +91,10 @@ int main(int argc, char **argv)
                 grid.CheckMove(particles[i], old_cell_index);
             }
 
-            // we must not be jumping in time
-            barrier.arrive_and_wait();
-
             if (main && save && step % saveFreq == 0)
             {
                 particles.Save(dump_file);
             }
-
-            barrier.arrive_and_wait();
         }
     };
 
@@ -106,7 +107,7 @@ int main(int argc, char **argv)
         auto start = chunkSize * chunk;
         auto end = start + chunkSize;
         if (chunk == threadNum - 1)
-            end = particles.size;
+            end = particleNum;
 
         threads.emplace_back(simulatorThread, start, end, main);
         main = false;
@@ -120,7 +121,7 @@ int main(int argc, char **argv)
 
     auto t2 = hclock::now();
 
-    auto dur = duration_cast<ms>(t2 - t1).count();
+    auto dur = duration_cast<us>(t2 - t1).count();
 
     fmt::print("Time: {}\n", dur);
 
@@ -153,8 +154,8 @@ void parse_cmd(int argc, char **argv)
         dump_file_name = result["filename"].as<std::string>();
     if (result.count("frequency"))
         saveFreq = result["frequency"].as<int>();
-    if (result.count("thread-num"))
-        threadNum = result["thread-num"].as<int>();
+    if (result.count("threads"))
+        threadNum = result["threads"].as<int>();
 
     fmt::print("Resulting settings:\nParticle num: {}\nStep num: {}\nSave frequency: {}\nDump file name: {}\nThread num: {}\n",
                particleNum,
