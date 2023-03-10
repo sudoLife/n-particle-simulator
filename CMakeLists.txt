@@ -7,3 +7,4 @@ project(particles CXX)
 
 add_subdirectory(serial)
 add_subdirectory(pthreads)
+add_subdirectory(openmp)
