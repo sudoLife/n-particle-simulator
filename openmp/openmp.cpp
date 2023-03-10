@@ -95,6 +95,7 @@ int main(int argc, char **argv)
                 particles.Move(particles[i]);
                 grid.CheckMove(particles[i], old_cell_index);
             }
+#pragma omp barrier // we need to make sure everyone moved their particles
 
             // as always, only one thread should do the dumping
             if (save && thread_id == 0 && step % saveFreq == 0)

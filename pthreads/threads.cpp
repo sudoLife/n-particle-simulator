@@ -90,6 +90,8 @@ int main(int argc, char **argv)
                 grid.CheckMove(particles[i], old_cell_index);
             }
 
+            barrier.arrive_and_wait(); // to ensure all the particles are moved before we attempt a save
+
             if (main && save && step % saveFreq == 0)
             {
                 particles.Save(dump_file);
