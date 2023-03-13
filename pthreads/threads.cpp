@@ -80,7 +80,6 @@ int main(int argc, char **argv)
             // we don't want to move a particle that could be used on the previous calculation and also in the dump step below
             barrier.arrive_and_wait();
 
-            // this is an obvious optimization step
             for (int i = start; i < stop; i++)
             {
                 auto old_cell_index = grid.getCellIndex(particles[i]);
