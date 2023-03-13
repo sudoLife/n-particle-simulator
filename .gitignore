@@ -5,3 +5,6 @@ particles
 particles
 temp
 visualize
+Report/*
+!Report/*.tex
+!Report/*.svg

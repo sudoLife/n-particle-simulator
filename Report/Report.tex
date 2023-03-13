@@ -1,0 +1,138 @@
+\documentclass[a4paper,11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{minted}
+\usepackage{svg}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage[most]{tcolorbox}
+
+\newtcolorbox{quotationbox}[1][]{colback=gray!15,colframe=black,fonttitle=\bfseries,title={#1},sharp corners}
+
+\title{
+    \textbf{Final project: n-particle simulator}
+}
+
+\author{Matvei Kazharov}
+\date{Spring 2022}
+
+\begin{document}
+
+\maketitle
+
+\section*{Introduction}
+
+\begin{quotationbox}{}
+    Develop an n-particle simulator that runs in linear time and create
+    parallel implementations whose speedup is proportional to the number of
+    processors used. You may use the provided implementations that un in polynomial time.
+    Benchmark the results.
+\end{quotationbox}
+
+\section{Implementation}
+I have chosen to use C++ for the project. The provided polynomial
+implementations were mostly developed in C-style. As such, I looked at them for
+the inspiration and formulas but wrote my own version from scratch using OOP.
+For I/O, \texttt{fmt} library is used. For getting and setting options, I chose \texttt{cxxopts}.
+
+\subsection{Serial}
+The key idea is to place particles on a grid in order to easily select the
+neighbors affecting the current particle. The choice of parallelization
+mechanism (or lack of thereof) does not change this.
+
+The grid is represented as a vector of forward-linked lists, each list is a cell.
+The dimensions of the cell and the particle coordinates within the grid are determined by
+the selected cutoff distance. When applying the forces, we take particles from
+the cell above, below, left and right of the current cell the particle is in, which
+leads to a linear dependency between the number of particles and the number of
+computations required to simulate them.
+
+\subsection{Pthreads}
+When using pthreads, we divide the work between the specified number of threads
+by giving them \texttt{start} and \texttt{stop} indices. Fine-grained locks are
+used for the grid, so we only ever lock the cell we are need to work on. This
+leads to reduced waiting. As such, there is a vector of locks, one for each cell.
+Furthermore, in C++20 there is a new type called \texttt{std::barrier}, which
+came in handy.  Two barriers are used. The first one right after applying the
+forces to ensure we do not move a particle that can be used by someone else in
+the computation of the previous step. The second one before outputting the
+result to a file to be certain all the values were updated.  Here's the relevant
+snippet:
+\begin{minted}{cpp}
+// we don't want to move a particle that could be used on the previous calculation
+barrier.arrive_and_wait();
+for (int i = start; i < stop; i++){
+    auto old_cell_index = grid.getCellIndex(particles[i]);
+    particles.Move(particles[i]);
+    grid.CheckMove(particles[i], old_cell_index);
+}
+barrier.arrive_and_wait(); // to ensure all the particles are moved before a save
+if (main && save && step % saveFreq == 0) {
+    particles.Save(dump_file);
+}
+\end{minted}
+\begin{figure}[H]
+    \includesvg[scale=0.7]{pthreads-speedup.svg}
+    \centering
+    \caption{Pthreads speedup}
+\end{figure}
+I could not get a clear 2x speedup, which is most certainly due to the overhead
+of spawning threads and other setup issues.  The spawning itself is included in
+the benchmark, so ir provides a certain constant addition to the overall time.
+The results seem very satisfactory nevertheless.
+\subsection{OpenMP}
+OpenMP implementation looks even cleaner and mimics the pthreads version, with
+locks and barriers, so there is nothing much to say about it.
+\begin{figure}[H]
+    \includesvg[scale=0.7]{openmp-speedup.svg}
+    \centering
+    \caption{OpenMP speedup}
+\end{figure}
+
+As we can see, OpenMP seems a bit more lightweight for the task, achieving a
+speedup of over 12 times for 16 threads. In addition to a potentially lighter
+cost of thread spawning, I highly suspect that the \texttt{std::barrier} is
+slower than the OPenMP barrier.
+
+\subsection{OpenMPI}
+OpenMPI is by far the hardest implementation, because it requires a fair bit of redesign.
+In the end, I separated the work by rows of the grid. Each process has its own
+partial grid (to not waste memory) that is aware of the offset in an imaginary
+total grid. We initially broadcast the generated particles to all of the processes, then
+add the relevant ones to our local grid.
+After the computation of the forces and moving the particles, we asynchronously
+send them to the next and previous processes (because they need the updates to
+be able to compute forces on the subsequent step). We also send particles that
+no longer belong to our grid (the ones that no longer belong to our cell after
+updating the coordinates)
+With that done, we use a blocking receive to accept the particles from the
+neighboring processes. This blocking call acts as an implicit barrier.
+We can think of it as two players tossing two balls: they toss their balls in
+the direction of their opponent and immediately start waiting for the opponent's
+ball. Thus, neither of them can proceed until both finish the I/O on this step.
+Since we can't write to the same file with I/O anymore, I chose to create csv
+files equal to the number of spawned processes.  The fields are the step and the
+coordinates. Later on, they can be easily merged for a complete file ready for
+simulation.
+\begin{figure}[H]
+    \includesvg[scale=0.7]{openmpi-speedup.svg}
+    \centering
+    \caption{OpenMPI speedup}
+\end{figure}
+From the benchmark we can see that the speedup is the highest of them all.
+Perhaps the partial grid was a good option. But it must be noted that the
+message passing would be much slower on a real distributed network of computers,
+so this simulation is not entirely accurate.
+\section{Overall comparison}
+\begin{figure}[H]
+    \includesvg[scale=0.7]{comparison.svg}
+    \centering
+    \caption{Parallelization comparison}
+\end{figure}
+From the plot of the particle number vs time (for 1000-step simulation), it seems that
+OpenMPI somehow wins. The serial implementation is better on smaller sizes, as
+expected, because it does not have the overhead of parallel systems.
+Pthreads and OpenMP perform pretty uniformly in terms of the shape, but OpenMP
+is faster.
+
+
+\end{document}
