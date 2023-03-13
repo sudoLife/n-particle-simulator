@@ -19,7 +19,7 @@
 
 \maketitle
 
-\section*{Introduction}
+\section{Introduction}
 
 \begin{quotationbox}{}
     Develop an n-particle simulator that runs in linear time and create
@@ -28,6 +28,9 @@
     Benchmark the results.
 \end{quotationbox}
 
+\section{Hardware}
+My computer is \href{https://www.tuxedocomputers.com/en/Linux-Hardware/Linux-Notebooks/15-16-inch/TUXEDO-Book-Pulse-15-Gen1.tuxedo}{Tuxedo Pulse 15 Gen. 1},
+equipped with AMD Ryzen 7 4800H and 64 GB of RAM.
 \section{Implementation}
 I have chosen to use C++ for the project. The provided polynomial
 implementations were mostly developed in C-style. As such, I looked at them for
@@ -134,5 +137,14 @@ expected, because it does not have the overhead of parallel systems.
 Pthreads and OpenMP perform pretty uniformly in terms of the shape, but OpenMP
 is faster.
 
+\section{Conclusion}
+In this project, I have deepened and applied my knowledge in the main
+parallelization techniques, creating a real-world usage example. The most
+challenging part to me was OpenMPI, because I have worked with message passing
+before. The other parts were much smoother. The benchmarks (with the exceptin of
+one) are not surprising to me.
+
+Overall, the project has been a great learning experience and I am looking forward to applying the new
+methods in my work.
 
 \end{document}
