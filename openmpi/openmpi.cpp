@@ -22,8 +22,6 @@ int saveFreq = defaults::saveFreq;
 std::string dumpFilename = "test.dump";
 bool save = false;
 
-int main(int argc, char **argv);
-
 // sets the above parameters
 void parse_cmd(int argc, char **argv);
 
@@ -64,10 +62,29 @@ int main(int argc, char **argv)
     // making sure eveyrone's on the same page
     // this can be blocking because we haven't started benchmarking yet
     MPI::COMM_WORLD.Bcast(particles.particles.data(), particleNum, MPI_Particle, root);
+    // because it's not set on all non-root processes otherwise
+    particles.size = std::sqrt(constants::density * particleNum);
 
     fmt::print("{}\n", "Broadcasted particles");
 
-    int full_grid_size = (particleNum / constants::distanceThreshold) + 1;
+    int full_grid_size = (particles.size / constants::distanceThreshold) + 1;
+
+    if (rank == 0)
+    {
+        fmt::print("Full grid size: {} x {}\n", full_grid_size, full_grid_size);
+    }
+
+    // this is for gdb
+    // delete this when debugged
+    // {
+    //     volatile int i = 0;
+    //     char hostname[256];
+    //     gethostname(hostname, sizeof(hostname));
+    //     fmt::print("#{} PID {} on {} ready for attach\n", rank, getpid(), hostname);
+    //     fflush(stdout);
+    //     while (0 == i)
+    //         sleep(5);
+    // }
 
     // now we calcualte our rows on the grid
     int rows_per_process = full_grid_size / process_num;
@@ -120,6 +137,8 @@ int main(int argc, char **argv)
     Particle end_of_communication{};
     end_of_communication.id = -1;
 
+    auto t1 = hclock::now();
+
     for (int step = 0; step < stepNum; step++)
     {
         local_ids.clear();
@@ -153,11 +172,14 @@ int main(int argc, char **argv)
             if (new_row_rel_index == -1)
             {
                 // send it to the other guy, we don't care anymore
-                // NOTE: new_row_index == -1 never occurs because of bouncing back
                 // I am using my own rank as a tag
                 // cool, right?
-                fmt::print("{}, Sending to {}\n", rank, new_row_abs_index / rows_per_process);
-                MPI::COMM_WORLD.Isend(&particles[id], 1, MPI_Particle, new_row_abs_index / rows_per_process, rank);
+                int receiver_rank = new_row_abs_index / rows_per_process;
+                if (receiver_rank >= process_num)
+                    receiver_rank = process_num - 1;
+                // fmt::print("{}, Sending to {}, new index {}, rows per process {}\n", rank, receiver_rank, new_row_abs_index, rows_per_process);
+
+                MPI::COMM_WORLD.Isend(&particles[id], 1, MPI_Particle, receiver_rank, rank);
             }
 
             // send it to the previous guy
@@ -218,6 +240,20 @@ int main(int argc, char **argv)
         // previous step must be finished before the new one can occur,
         // therefore we don't need an explicit barrier to synchronize our
         // effort, the communication itself is the barrier
+    }
+
+    auto t2 = hclock::now();
+
+    auto dur = duration_cast<us>(t2 - t1).count();
+
+    int64_t result = 0;
+    MPI::COMM_WORLD.Reduce(&dur, &result, 1, MPI_INT64_T, MPI::SUM, root);
+
+    if (rank == root)
+    {
+        long double mean = result;
+        mean /= process_num;
+        fmt::print("Time {}\n", mean);
     }
 
     MPI::Finalize();
