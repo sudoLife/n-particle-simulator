@@ -80,7 +80,6 @@ void Particles::Move(Particle &particle)
     //
     //  bounce from walls
     //
-    // TODO: Another parallelization place?
     while (particle.x < 0 || particle.x > size)
     {
         particle.x = particle.x < 0 ? -particle.x : 2 * size - particle.x;

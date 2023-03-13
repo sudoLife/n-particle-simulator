@@ -27,7 +27,6 @@ void parse_cmd(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
-    // TODO: replace this with an option?
     parse_cmd(argc, argv);
 
     Particles particles(particleNum);

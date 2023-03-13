@@ -18,6 +18,7 @@ int particleNum = defaults::particleNum;
 int stepNum = defaults::stepNum;
 int saveFreq = defaults::saveFreq;
 int threadNum = defaults::threadNum;
+bool save = false;
 
 std::string dumpFilename = "test.dump";
 
@@ -26,12 +27,9 @@ void parse_cmd(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
-    // TODO: replace this with an option?
     parse_cmd(argc, argv);
 
     omp_set_num_threads(threadNum);
-
-    bool save = false;
 
     Particles particles(particleNum);
 

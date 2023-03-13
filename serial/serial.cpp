@@ -16,15 +16,14 @@ int particleNum = defaults::particleNum;
 int stepNum = defaults::stepNum;
 int saveFreq = defaults::saveFreq;
 std::string dumpFilename = "test.dump";
+bool save = false;
 
 // sets the above parameters
 void parse_cmd(int argc, char **argv);
 
 int main(int argc, char **argv)
 {
-    // TODO: replace this with an option?
     parse_cmd(argc, argv);
-    bool save = false;
 
     Particles particles(particleNum);
 

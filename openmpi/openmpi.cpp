@@ -20,7 +20,6 @@ int particleNum = defaults::particleNum;
 int stepNum = defaults::stepNum;
 int saveFreq = defaults::saveFreq;
 std::string dumpFilename = "test.dump";
-// TODO: replace this with an option?
 bool save = false;
 
 int main(int argc, char **argv);
@@ -91,18 +90,6 @@ int main(int argc, char **argv)
 
     fmt::print("{}\n", "Added grid");
 
-    // this is for gdb
-    // delete this when debugged
-    // {
-    //     volatile int i = 0;
-    //     char hostname[256];
-    //     gethostname(hostname, sizeof(hostname));
-    //     printf("PID %d on %s ready for attach\n", getpid(), hostname);
-    //     fflush(stdout);
-    //     while (0 == i)
-    //         sleep(5);
-    // }
-
     // having so many for loops in the same region is just too sad, lambda
     // might make it better
     // grid_x here is relative
@@ -159,7 +146,6 @@ int main(int argc, char **argv)
             auto new_row_rel_index = grid.getGridRelX(particles[id]);
 
             // if the particle doesn't belong to us anymore
-            // if (new_row_abs_index < row_start || new_row_abs_index >= row_end)
             if (new_row_rel_index == -1)
             {
                 // send it to the other guy, we don't care anymore
@@ -261,6 +247,7 @@ void parse_cmd(int argc, char **argv)
     if (result.count("frequency"))
         saveFreq = result["frequency"].as<int>();
 
+    // we just don't want that much stuff in the terminal
     if (MPI::COMM_WORLD.Get_rank() == 0)
     {
         fmt::print("Resulting settings:\nParticle num: {}\nStep num: {}\nSave frequency: {}\nDump file name: {}\n",

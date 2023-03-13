@@ -12,8 +12,6 @@ public:
 public:
     explicit Particles() = default;
 
-    // TODO: is this where we can optimize it? Because it seems like a waste
-    // to not update the neighbor as well
     void ApplyForce(Particle &particle, Particle &neighbor);
     void Move(Particle &particle);
     void Save(fmt::ostream &dump_file);
