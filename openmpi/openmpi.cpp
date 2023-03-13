@@ -109,8 +109,12 @@ int main(int argc, char **argv)
     };
 
     std::vector<int> local_ids;
-    // there will be hardly any reallocations
-    local_ids.reserve(particleNum / process_num);
+    // we can technically reserve something like particleNum / process_num
+    // and that would work very well for a big number of steps
+    // because even if there were any reallocations
+    // we'd see very few of them after a few steps, because particles tend to be
+    // spread out more or less evenly
+    local_ids.reserve(particleNum);
 
     // this is what we use to signify the end of communication
     Particle end_of_communication{};

@@ -23,9 +23,6 @@ public:
 public:
     std::vector<Particle> particles;
     double size;
-
-private:
-private:
 };
 
 #endif // PARTICLES_HPP
