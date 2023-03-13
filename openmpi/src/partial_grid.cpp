@@ -64,9 +64,7 @@ int PartialGrid::getCellIndex(const Particle &particle)
 
 int PartialGrid::getGridRelX(const Particle &particle)
 {
-    auto result = (int)std::floor(
-        (particle.x - offset_rows_) / constants::distanceThreshold);
-
+    auto result = getGridAbsX(particle) - offset_rows_;
     // returning -1 in both cases for consistency, we could have returned an
     // arbitrary negative number when the particle is in a row preceding our
     // part of the grid

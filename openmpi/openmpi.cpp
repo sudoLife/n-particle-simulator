@@ -33,6 +33,8 @@ int main(int argc, char **argv)
     int rank = MPI::COMM_WORLD.Get_rank();
     int process_num = MPI::COMM_WORLD.Get_size();
 
+    fmt::ostream dump_file = fmt::output_file(fmt::format("{}.{}", dumpFilename, rank));
+    dump_file.print("step x y\n"); // CSV-like
     // ---------- Creating the type for network operations START
     MPI_Datatype MPI_Particle;
     int block_lengths[7] = {1, 1, 1, 1, 1, 1, 1};
@@ -156,7 +158,6 @@ int main(int argc, char **argv)
                 }
             }
         }
-
         for (auto &id : local_ids)
         {
             auto old_cell_index = grid.getCellIndex(particles[id]);
@@ -193,6 +194,10 @@ int main(int argc, char **argv)
             {
                 MPI::COMM_WORLD.Isend(&particles[id], 1, MPI_Particle, rank + 1, rank);
             }
+
+            // dump to file
+            if ((save) && step % saveFreq == 0)
+                dump_file.print("{} {} {}\n", step, particles[id].x, particles[id].y);
         }
 
         // signify that we are done talking
@@ -245,6 +250,8 @@ int main(int argc, char **argv)
     auto t2 = hclock::now();
 
     auto dur = duration_cast<us>(t2 - t1).count();
+
+    dump_file.close();
 
     int64_t result = 0;
     MPI::COMM_WORLD.Reduce(&dur, &result, 1, MPI_INT64_T, MPI::SUM, root);
